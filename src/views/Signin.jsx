@@ -1,54 +1,55 @@
+import Cookies from 'js-cookie';
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Cookies from 'universal-cookie';
 
 export default function Signin() {
-    let navigate = useNavigate();
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
-  
-    const handleSubmit = async (e) => {
-      e.preventDefault();
-  
-      const data = {
-        username: username,
-        password: password,
-      };
-  
-      try {
-        const response = await fetch('http://100.78.16.82:3000/sock/api/auth/signin', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-          body: JSON.stringify(data),
-        });
-  
-        if (response.ok) {
-          const responseData = await response.json();
-          // Handle the successful login response here (e.g., store tokens or redirect).
-        //   cookieStorage.setItem('access_token', responseData.token)
-        Cookies.set('token', responseData.token, { expires: 7 });
-          sessionStorage.setItem('roles', responseData.profile.userRoles);
-          const roles = sessionStorage.getItem('roles');
-        //   if (roles == 'customer') {
-        //     navigate('/')
-        //   } else {
-        //     navigate('/admin')
-        //   }
-        const token = Cookies.get('token');
-          console.log(token);
-          const decoded = jwtDecode(responseData.token, { header: true })
-          console.log(decoded);
-        } else {
-          // Handle error response (e.g., show an error message).
-          console.error('Login failed');
-        }
-      } catch (error) {
-        console.error('Error:', error);
-      }
+  let navigate = useNavigate();
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    const data = {
+      username: username,
+      password: password,
     };
+
+    try {
+      const response = await fetch('http://100.78.16.82:3000/sock/api/auth/signin', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (response.ok) {
+        const responseData = await response.json();
+
+        const result = await Cookies.set("token", responseData.token, {
+          expires: 7,
+        });
+        console.log(result);
+
+        const decode = JSON.parse(atob(result.split('.')[1]));
+        console.log(decode);
+        const roles = decode.roleType;
+        if (roles === 'customer') {
+          navigate('/');
+        } else {
+          navigate('/admin');
+        }
+      } else {
+        // Handle error response (e.g., show an error message).
+        console.error('Login failed');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
+
 
 
   return (
@@ -62,7 +63,7 @@ export default function Signin() {
             Welcome back! Please enter your details.
           </div>
           <div className="ml-20 mt-10">
-            <form onSubmit={handleSubmit} enctype="multipart/form-data">
+            <form onSubmit={handleSubmit} encType="multipart/form-data">
               <label htmlFor="username" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
                 Your Username
               </label>
